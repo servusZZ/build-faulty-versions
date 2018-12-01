@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
-import data_export.PitMergedMutationsWriter;
+import directories.globals.Directories;
 import pit.data_objects.PitMethod;
 
 public class PitMergedMutationsReader {
@@ -16,7 +16,7 @@ public class PitMergedMutationsReader {
 	 * The PitTestCase and PitMutation objects are referenced by the methods.
 	 */
 	public static List<PitMethod> readPitMergedMethods(String dir) throws IOException{
-		String outputFile = dir + PitMergedMutationsWriter.MERGED_METHODS_FILE_NAME;
+		String outputFile = dir + Directories.MERGED_METHODS_FILE_NAME;
 		FileInputStream fis = new FileInputStream(new File(outputFile));
 		XMLDecoder decoder = new XMLDecoder(fis);
 		@SuppressWarnings("unchecked")
@@ -25,15 +25,4 @@ public class PitMergedMutationsReader {
 		fis.close();
 		return methods;
 	}
-	
-	/*public static List<PitTestCase> readPitAllTests(String dir) throws IOException{
-		String outputFile = dir + PitMergedMutationsWriter.MERGED_TESTS_FILE_NAME;
-		FileInputStream fis = new FileInputStream(new File(outputFile));
-		XMLDecoder decoder = new XMLDecoder(fis);
-		@SuppressWarnings("unchecked")
-		List<PitTestCase> tests = (List<PitTestCase>) decoder.readObject();
-		decoder.close();
-		fis.close();
-		return tests;
-	}	*/
 }

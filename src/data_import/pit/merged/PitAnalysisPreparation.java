@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,17 +22,83 @@ public class PitAnalysisPreparation {
 	private List<PitMethod> pitMethods;
 	private List<PitMutation> pitFaults;
 	private List<PitTestCase> pitTests;
-	private Map<String, PitTestCase> pitTestsMap;
+	private final int MIN_TEST_SIZE;
 	
-	public PitAnalysisPreparation(String projectDir) throws IOException {
+	public PitAnalysisPreparation(String projectDir, int minPitTestSize) throws IOException {
+		MIN_TEST_SIZE = minPitTestSize;
 		pitMethods = PitMergedMutationsReader.readPitMergedMethods(projectDir);
 		initPitTestsAndFaults();
+		deleteSmallPitTests();
 	}
+	/**
+	 * Collects all tests that are smaller (covered Methods) than the passed threshold.
+	 * Removes the tests from the List and all references in PitMethods and PitMutations.
+	 * Also updates the killingTests and coveringTests strings.
+	 */
+	private void deleteSmallPitTests() {
+		Set<PitTestCase> smallPitTests = new HashSet<PitTestCase>();
+		Iterator<PitTestCase> iterTests = pitTests.iterator();
+		while (iterTests.hasNext()) {
+			PitTestCase pitTest = iterTests.next();
+			if (isSmallPitTest(pitTest)) {
+				smallPitTests.add(pitTest);
+				iterTests.remove();
+			}
+		}
+		deleteTestsFromMethods(smallPitTests);
+		deleteTestsFromFaults(smallPitTests);
+	}
+	/**
+	 * Removes the small tests that shouldn't be considered in the prioritization from the pitMethods.
+	 * Also removes methods that are not covered by any test anymore.
+	 */
+	private void deleteTestsFromMethods(Set<PitTestCase> pitTestsRemoved) {
+		Iterator<PitMethod> iterMethods = pitMethods.iterator();
+		while (iterMethods.hasNext()) {
+			PitMethod pitMethod = iterMethods.next();
+			pitMethod.getCoveringTests().removeAll(pitTestsRemoved);
+			updateCoveringTestsNames(pitMethod.getCoveringTestsNames(), pitMethod.getCoveringTests());
+			if (pitMethod.getCoveringTests().isEmpty()) {
+				iterMethods.remove();
+			}
+		}
+	}
+	/**
+	 * Removes the small tests that shouldn't be considered in the prioritization from the pitFaults.
+	 * Also removes faults that are not killed by any test anymore.
+	 */
+	private void deleteTestsFromFaults(Set<PitTestCase> pitTestsRemoved) {
+		Iterator<PitMutation> iterFaults = pitFaults.iterator();
+		while(iterFaults.hasNext()) {
+			PitMutation pitFault = iterFaults.next();
+			pitFault.getKillingTests().removeAll(pitTestsRemoved);
+			updateCoveringTestsNames(pitFault.getKillingTestsNames(), pitFault.getKillingTests());
+			if (pitFault.getKillingTests().isEmpty()) {
+				iterFaults.remove();
+			}
+		}
+	}
+	private boolean isSmallPitTest(PitTestCase pitTest) {
+		if (pitTest.getCoveredMethods().size() < MIN_TEST_SIZE) {
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Updates the passed Set that contains the names of the covering tests.
+	 */
+	private void updateCoveringTestsNames(Set<String> coveringTestsNames, Set<PitTestCase> coveringTestsNew) {
+		coveringTestsNames.clear();
+		for (PitTestCase pitTest: coveringTestsNew) {
+			coveringTestsNames.add(pitTest.getName());
+		}
+	}
+	
 	/**	creates PitTestCase objects and the links to PitMethods and PitMutations.
 	 *  Also fills the pit faults set.
 	 */
 	private void initPitTestsAndFaults() {
-		pitTestsMap = new HashMap<String, PitTestCase>();
+		Map<String, PitTestCase> pitTestsMap = new HashMap<String, PitTestCase>();
 		pitFaults = new ArrayList<PitMutation>();
 		for (PitMethod method: pitMethods) {
 			// create new test or update covering methods for existing test
@@ -44,6 +111,7 @@ public class PitAnalysisPreparation {
 				test.updateCoveredMethods(method);
 				method.addCoveringTest(test);
 			}
+			
 			// update possible Faults for each killing test of a mutation
 			for (PitMutation mutation: method.getMutations()) {
 				if (EPitMutationStatus.isFault(mutation)) {

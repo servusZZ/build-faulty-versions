@@ -16,7 +16,6 @@ import pit.data_objects.PitTestCase;
 public class SelectSpecificFaults1 extends PitFaultSelectionStrategyBase{
 	public SelectSpecificFaults1() {
 		super(3, 3, 1);
-		
 	}
 
 	@Override
