@@ -15,13 +15,13 @@ public class FaultSelectionStrategy1 extends PitFaultSelectionStrategyBase{
 		super(minFaultCount, maxFaultCount, versionsPerFaultCount);
 	}
 	
-	//TODO: 2 Faults per Failure erlauben - selection implementieren,
-	//				in projekt metrics speichern wie viele der Failures mehrere Faults haben
-	//				zudem darauf achten, ob faults in der gleichen Klassen vorkommen (oder hierfür nur wenige versionen manuell erstellen?)
+	//TODO:		in projekt metrics speichern wie viele der Failures mehrere Faults haben
+	//			zudem darauf achten, ob faults in der gleichen Klassen vorkommen (oder hierfür nur wenige versionen manuell erstellen?)
 	//		
 	@Override
 	public List<Set<PitMutation>> selectFaultyVersions(List<PitMutation> pitFaults, List<PitTestCase> pitTests) {
 		FaultyVersionSelector selectionHelper = new FaultyVersionSelector();
+		//TODO: debug fault selection
 		List<Set<PitMutation>> pitFaultyVersionsAll = selectionHelper.selectFaultyVersionsOneFaultPerFailure(minFaultCount, maxFaultCount, versionsPerFaultCount, pitFaults);
 		int minFaultCountTwoFaults = minFaultCount;
 		if (minFaultCountTwoFaults == 1) {

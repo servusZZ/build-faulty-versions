@@ -16,6 +16,7 @@ import data_import.pit.merged.PitDataObjectsConverter;
 import directories.globals.Directories;
 import fault_selection.FaultSelectionStrategy1;
 import fault_selection.PitFaultSelectionStrategyBase;
+import faulty_project.evaluation.ProjectEvaluationUtils;
 import faulty_project.globals.FaultyProjectGlobals;
 import pit.data_objects.PitMutation;
 import prioritization.data_objects.FaultyVersion;
@@ -44,7 +45,12 @@ public class FaultyVersionsBuilder {
 			System.out.println("Building next faulty Version with " + converter.getFaults().size() + " faults, " + converter.getFailures().length + " failures, " + converter.getPassedTCs().length + " passing Test Cases and " + FaultyProjectGlobals.methodsCount + " relevant methods.");
 			ProjectEvaluationEntry projectMetrics = new ProjectEvaluationEntry(faultyProjectId, projectName,
 					converter.getFaults().size(), converter.getFailures().length,
-					converter.getPassedTCs().length, FaultyProjectGlobals.methodsCount, MIN_TEST_SIZE);
+					ProjectEvaluationUtils.getFailuresWithMultipleFaultsCount(converter.getFailures()),
+					converter.getPassedTCs().length, FaultyProjectGlobals.methodsCount, MIN_TEST_SIZE,
+					ProjectEvaluationUtils.getMedianTestSize(converter.getFailures()),
+					ProjectEvaluationUtils.getAverageTestSize(converter.getFailures()),
+					ProjectEvaluationUtils.getFaultsInSameClassPairsCount(converter.getFaults()),
+					ProjectEvaluationUtils.getFaultsInSamePackagePairsCount(converter.getFaults()));
 			faultyProjectId++;
 			faultyVersions.add(new FaultyVersion(converter.getFailures(), converter.getPassedTCs(),
 					converter.getFaults(), projectMetrics));

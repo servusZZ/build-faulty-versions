@@ -17,15 +17,18 @@ public class PitDataObjectsConverter {
 	private TestCase[] failures;
 	private TestCase[] passedTCs;
 	private Set<Fault> faults;
+	/**	Maps each fault as PitMutation to the respective Fault object */
+	private Map<PitMutation, Fault> pitFaultFaultMapping;
 	private Map<PitMethod, Integer> methodIndexMapping;
 	
 	public PitDataObjectsConverter(Set<PitMutation> pitFaults, Set<PitTestCase> pitFailures,
 			Set<PitTestCase> pitPassedTCs, Set<PitMethod> relevantMethods) {
 		initFaults(pitFaults);
 		initMethodIndexMapping(relevantMethods);
-		failures = initTestCases(pitFailures, false);
-		passedTCs = initTestCases(pitPassedTCs, true);
-		DataImportUtils.addFaultsToFailures(failures, faults);
+		failures = initFailures(pitFailures, pitFaults);
+		
+		passedTCs = initPassedTestCases(pitPassedTCs);
+		//DataImportUtils.addFaultsToFailures(failures, faults);
 	}
 	private void initMethodIndexMapping(Set<PitMethod> relevantMethods) {
 		methodIndexMapping = new HashMap<PitMethod, Integer>();
@@ -36,16 +39,42 @@ public class PitDataObjectsConverter {
 		}
 	}
 	/**
-	 * Creates TestCase objects for the passed pit test cases.
+	 * Creates TestCase objects for the failed pit test cases.
 	 * The methodIndexMapping must already be set before calling this method.
-	 * @param passed the value (true or false) to which the passed attribute of the created
-	 * 		  TestCases will be set.
+	 * Also sets the faults of each failure.
 	 */
-	private TestCase[] initTestCases(Set<PitTestCase> pitTestCases, boolean passed) {
+	private TestCase[] initFailures(Set<PitTestCase> pitTestCases, Set<PitMutation> pitFaults) {
 		TestCase[] testCases = new TestCase[pitTestCases.size()];
 		int i = 0;
 		for (PitTestCase pitTestCase: pitTestCases) {
-			testCases[i] = new TestCase(pitTestCase.getName(), passed, getMethodIndexes(pitTestCase.getCoveredMethods()));
+			Set<PitMutation> underlyingFaults = new HashSet<PitMutation>(pitTestCase.getPossibleFaults());
+			underlyingFaults.retainAll(pitFaults);
+			testCases[i] = new TestCase(pitTestCase.getName(), false, getMethodIndexes(pitTestCase.getCoveredMethods()));
+			i++;
+			testCases[i].setFaults(getFaultsFromPitFaults(underlyingFaults));
+		}
+		return testCases;
+	}
+	/**
+	 * Returns the respective faults that were created from the passed pit faults.
+	 * Uses the pitFault to Fault Mapping.
+	 */
+	private Set<Fault> getFaultsFromPitFaults(Set<PitMutation> pitFaults){
+		Set<Fault> faults = new HashSet<Fault>();
+		for (PitMutation pitFault: pitFaults) {
+			faults.add(pitFaultFaultMapping.get(pitFault));
+		}
+		return faults;
+	}
+	/**
+	 * Creates TestCase objects for the passed pit test cases.
+	 * The methodIndexMapping must already be set before calling this method.
+	 */
+	private TestCase[] initPassedTestCases(Set<PitTestCase> pitTestCases) {
+		TestCase[] testCases = new TestCase[pitTestCases.size()];
+		int i = 0;
+		for (PitTestCase pitTestCase: pitTestCases) {
+			testCases[i] = new TestCase(pitTestCase.getName(), true, getMethodIndexes(pitTestCase.getCoveredMethods()));
 			i++;
 		}
 		return testCases;
@@ -57,11 +86,17 @@ public class PitDataObjectsConverter {
 		}
 		return methodIndexes;
 	}
+	/**
+	 * Creates Fault objects for each passed pitFault.
+	 * Also initializes the pitFaultFaultMapping.
+	 */
 	private void initFaults(Set<PitMutation> pitFaults) {
 		faults = new HashSet<Fault>();
+		pitFaultFaultMapping = new HashMap<PitMutation, Fault>();
 		for (PitMutation pitFault: pitFaults) {
 			Fault fault = new Fault(pitFault.getId(), new ArrayList<String>(pitFault.getKillingTestsNames()));
 			faults.add(fault);
+			pitFaultFaultMapping.put(pitFault, fault);
 		}
 	}
 	public TestCase[] getFailures() {

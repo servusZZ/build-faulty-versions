@@ -99,8 +99,68 @@ public class FaultyVersionSelector {
 	 * Returns null, iff no faulty version could be built (by the number of defined maximum tries).
 	 */
 	private List<Set<PitMutation>> selectFaultyVersionsTwoFaultsPerFailure(int faultsCount, int versionsPerFaultCount, List<PitMutation> pitFaults){
-		System.out.println("Two Faults per Failure allowed Selection Strategy not yet implemented.");
-		return null;
+		List<Set<PitMutation>> faultyVersionsPerFaultCount = new ArrayList<Set<PitMutation>>();
+		/** If no version or just an identical version could be built
+		 * for maxTries times in a row, the iteration stops.	*/
+		int maxTries = 10, triesCount = 0;
+		int maxTriesOnlyOneFailure = 20, triesCountOnlyOneFailure = 0;
+		for (int k = 0; k < versionsPerFaultCount; k++) {
+			while ((triesCount < maxTries) && (triesCountOnlyOneFailure < maxTriesOnlyOneFailure)) {
+				Set<PitMutation> nextFaultyVersion = selectFaultyVersionTwoFaultsPerFailure(pitFaults, faultsCount);
+				if (nextFaultyVersion == null
+						|| comparator.faultyVersionIsAlreadyContained(faultyVersionsPerFaultCount, nextFaultyVersion)) {
+					triesCount++;
+				} 
+				else if (comparator.versionContainsOnlyOneFailure(nextFaultyVersion)) {
+					triesCountOnlyOneFailure++;
+				}
+				else { // a successful version could be built, reset tries counters and build the next version
+					faultyVersionsPerFaultCount.add(nextFaultyVersion);
+					triesCount = 0;
+					triesCountOnlyOneFailure = 0;
+					break;
+				}
+			}
+		}
+		if (faultyVersionsPerFaultCount.isEmpty()) {
+			return null;
+		}
+		return faultyVersionsPerFaultCount;
+	}
+	/**
+	 * Returns a faulty version with the passed number of faults.
+	 * Constraint: All Failures must have maximum two underlying Faults.
+	 * Selects all allowed faults by random.<br>
+	 * Returns null, iff no faulty version could be built because the (by random) selected faults led to failures
+	 * that excluded all remaining faults.
+	 */
+	private Set<PitMutation> selectFaultyVersionTwoFaultsPerFailure(List<PitMutation> pitFaults, int faultsCount){
+		// select faults that only lead to one underlying fault first
+		Set<PitMutation> faultyVersion = new HashSet<PitMutation>();
+		Set<PitMutation> remainingFaults = new HashSet<PitMutation>(pitFaults);
+		Set<PitMutation> twoUnderlyingFaults = new HashSet<PitMutation>();
+		while (!remainingFaults.isEmpty()) {
+			PitMutation nextFault = FaultsUtils.getRandomFault(remainingFaults);
+			faultyVersion.add(nextFault);
+			Set<PitMutation> tmpForbiddenFaults = FaultsUtils.getLinkedFaultsThroughFailures(nextFault);
+			twoUnderlyingFaults.addAll(tmpForbiddenFaults);
+			remainingFaults.removeAll(tmpForbiddenFaults);
+			if (faultyVersion.size() == faultsCount-1) {
+				break;
+			}
+		}
+		// Out of the previous set of forbidden faults now pick faults by random.
+		// They automatically cause some of the failures to have two underlying faults.
+		twoUnderlyingFaults.removeAll(faultyVersion);
+		while (faultyVersion.size() < faultsCount) {
+			if (twoUnderlyingFaults.isEmpty()) {
+				return null;
+			}
+			PitMutation nextFault = FaultsUtils.getRandomFault(twoUnderlyingFaults);
+			faultyVersion.add(nextFault);
+			twoUnderlyingFaults.removeAll(FaultsUtils.getLinkedFaultsThroughFailures(nextFault));
+		}
+		return faultyVersion;
 	}
 	public List<Set<PitMutation>> selectFaultyVersionsFaultsCloseTogether(){
 		System.out.println("Faults Close Together Selection Strategy not yet implemented.");
