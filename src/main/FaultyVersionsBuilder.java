@@ -21,6 +21,7 @@ import faulty_project.globals.FaultyProjectGlobals;
 import pit.data_objects.PitMutation;
 import prioritization.data_objects.FaultyVersion;
 import prioritization.evaluation.ProjectEvaluationEntry;
+import prioritization.evaluation.TestSuiteEvaluationEntry;
 
 public class FaultyVersionsBuilder {
 	private PitAnalysisPreparation prep;
@@ -29,7 +30,7 @@ public class FaultyVersionsBuilder {
 	private List<Set<PitMutation>> importPitFaultyVersions(String dir) throws IOException {
 		// import pit merged methods
 		prep = new PitAnalysisPreparation(dir, MIN_TEST_SIZE);
-		PitFaultSelectionStrategyBase faultSelectionStrategy = new FaultSelectionStrategy1(1, 20, 5);
+		PitFaultSelectionStrategyBase faultSelectionStrategy = new FaultSelectionStrategy1(5, 12, 2);
 		return faultSelectionStrategy.selectFaultyVersions(prep.getPitFaults(), prep.getPitTests());
 	}
 
@@ -43,19 +44,31 @@ public class FaultyVersionsBuilder {
 		for (Set<PitMutation> pitFaultyVersion: pitFaultyVersions) {
 			PitDataObjectsConverter converter = prep.initTestsAndFaults(pitFaultyVersion);
 			System.out.println("Building next faulty Version with " + converter.getFaults().size() + " faults, " + converter.getFailures().length + " failures, " + converter.getPassedTCs().length + " passing Test Cases and " + FaultyProjectGlobals.methodsCount + " relevant methods.");
-			ProjectEvaluationEntry projectMetrics = new ProjectEvaluationEntry(faultyProjectId, projectName,
-					converter.getFaults().size(), converter.getFailures().length,
-					ProjectEvaluationUtils.getFailuresWithMultipleFaultsCount(converter.getFailures()),
-					converter.getPassedTCs().length, FaultyProjectGlobals.methodsCount, MIN_TEST_SIZE,
-					ProjectEvaluationUtils.getMedianTestSize(converter.getFailures()),
-					ProjectEvaluationUtils.getAverageTestSize(converter.getFailures()),
-					ProjectEvaluationUtils.getFaultsInSameClassPairsCount(converter.getFaults()),
-					ProjectEvaluationUtils.getFaultsInSamePackagePairsCount(converter.getFaults()));
+			ProjectEvaluationEntry projectMetrics = createProjectEvaluationEntry(faultyProjectId, projectName, converter);
 			faultyProjectId++;
 			faultyVersions.add(new FaultyVersion(converter.getFailures(), converter.getPassedTCs(),
 					converter.getFaults(), projectMetrics));
 		}
 		writeFaultyVersionsFile(dir, faultyVersions);
+	}
+	
+	private ProjectEvaluationEntry createProjectEvaluationEntry(int faultyProjectId, String projectName, PitDataObjectsConverter converter) {
+		ProjectEvaluationEntry projectMetrics =  new ProjectEvaluationEntry(faultyProjectId, projectName,
+				converter.getFaults().size(), converter.getFailures().length,
+				ProjectEvaluationUtils.getFailuresWithMultipleFaultsCount(converter.getFailures()),
+				converter.getPassedTCs().length, FaultyProjectGlobals.methodsCount,
+				ProjectEvaluationUtils.getFaultsInSameClassPairsCount(converter.getFaults()),
+				ProjectEvaluationUtils.getFaultsInSamePackagePairsCount(converter.getFaults()));
+		
+		double[] dduMetrics = ProjectEvaluationUtils.calculateDDU(converter.getFailures(), converter.getPassedTCs());
+		
+		TestSuiteEvaluationEntry testSuiteMetrics = new TestSuiteEvaluationEntry(FaultyProjectGlobals.testsCount,
+				MIN_TEST_SIZE, ProjectEvaluationUtils.getMedianTestSize(converter.getFailures()),
+				ProjectEvaluationUtils.getAverageTestSize(converter.getFailures()),
+				dduMetrics[3], dduMetrics[0], dduMetrics[1], dduMetrics[2]);
+		projectMetrics.setTestSuiteMetrics(testSuiteMetrics);
+		
+		return projectMetrics;
 	}
 	
 	private void writeFaultyVersionsFile(String outputDir, List<FaultyVersion> faultyVersions) throws IOException {

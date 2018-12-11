@@ -33,7 +33,6 @@ public class FaultyVersionsBuilderMain {
 		System.out.println("Building Faulty versions for project " + projectName);
 		builder.processMergedPitProject(dir, projectName);
 		
-		//TODO: Serialized xml datei wird sehr groß, prüfen ob die für z.b. 100 versionen aus einem PIT projekt nicht zu rießig wird
 		System.out.println("Building Faulty Versions program finished!");
 	}
 	

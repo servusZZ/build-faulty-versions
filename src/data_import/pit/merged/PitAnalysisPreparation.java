@@ -139,8 +139,8 @@ public class PitAnalysisPreparation {
 		Set<PitTestCase> pitPassedTCs = getRelevantPassingTests(relevantMethods, pitFailures);
 		FaultyProjectGlobals.methodsCount = relevantMethods.size();
 		FaultyProjectGlobals.failuresCount = pitFailures.size();
-//		FaultyProjectGlobals.passedTestsCount = pitPassedTCs.size();
-//		FaultyProjectGlobals.testsCount = FaultyProjectGlobals.failuresCount + FaultyProjectGlobals.passedTestsCount;
+		FaultyProjectGlobals.passedTestsCount = pitPassedTCs.size();
+		FaultyProjectGlobals.testsCount = FaultyProjectGlobals.failuresCount + FaultyProjectGlobals.passedTestsCount;
 		return new PitDataObjectsConverter(faultyVersion, pitFailures, pitPassedTCs, relevantMethods);
 	}
 	private Set<PitTestCase> getPitFailuresFromFaultyVersion(Set<PitMutation> faults){

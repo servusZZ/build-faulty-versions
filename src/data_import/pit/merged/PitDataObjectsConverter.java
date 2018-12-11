@@ -11,7 +11,6 @@ import pit.data_objects.PitMutation;
 import pit.data_objects.PitTestCase;
 import prioritization.data_objects.Fault;
 import prioritization.data_objects.TestCase;
-import utils.DataImportUtils;
 
 public class PitDataObjectsConverter {
 	private TestCase[] failures;
@@ -26,9 +25,7 @@ public class PitDataObjectsConverter {
 		initFaults(pitFaults);
 		initMethodIndexMapping(relevantMethods);
 		failures = initFailures(pitFailures, pitFaults);
-		
 		passedTCs = initPassedTestCases(pitPassedTCs);
-		//DataImportUtils.addFaultsToFailures(failures, faults);
 	}
 	private void initMethodIndexMapping(Set<PitMethod> relevantMethods) {
 		methodIndexMapping = new HashMap<PitMethod, Integer>();
@@ -50,8 +47,8 @@ public class PitDataObjectsConverter {
 			Set<PitMutation> underlyingFaults = new HashSet<PitMutation>(pitTestCase.getPossibleFaults());
 			underlyingFaults.retainAll(pitFaults);
 			testCases[i] = new TestCase(pitTestCase.getName(), false, getMethodIndexes(pitTestCase.getCoveredMethods()));
-			i++;
 			testCases[i].setFaults(getFaultsFromPitFaults(underlyingFaults));
+			i++;
 		}
 		return testCases;
 	}
