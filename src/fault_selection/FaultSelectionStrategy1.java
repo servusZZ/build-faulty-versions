@@ -7,10 +7,12 @@ import pit.data_objects.PitMutation;
 import pit.data_objects.PitTestCase;
 
 /**
- * Select faults by random and only one fault per Failure allowed.
- * Used for testing the whole prioritization pipeline.
+ * Select faults by random, with configs:<br>
+ * 	- only one Fault per failure allowed<br>
+ *  - pick faults in a way that some failures have 2 underlying faults
  */
 public class FaultSelectionStrategy1 extends PitFaultSelectionStrategyBase{
+	private final int VERSIONS_PER_FAULT_COUNT_2UNDERLYING_FAULTS = 2;
 	public FaultSelectionStrategy1(int minFaultCount, int maxFaultCount, int versionsPerFaultCount) {
 		super(minFaultCount, maxFaultCount, versionsPerFaultCount);
 	}
@@ -24,7 +26,8 @@ public class FaultSelectionStrategy1 extends PitFaultSelectionStrategyBase{
 		if (minFaultCountTwoFaults == 1) {
 			minFaultCountTwoFaults = 2;
 		}
-		pitFaultyVersionsAll.addAll(selectionHelper.selectFaultyVersionsTwoFaultsPerFailure(minFaultCountTwoFaults, maxFaultCount, versionsPerFaultCount, pitFaults));
+		//TODO: für diese config nur 3 versions per fault count generieren
+		pitFaultyVersionsAll.addAll(selectionHelper.selectFaultyVersionsTwoFaultsPerFailure(minFaultCountTwoFaults, maxFaultCount, VERSIONS_PER_FAULT_COUNT_2UNDERLYING_FAULTS, pitFaults));
 //		pitFaultyVersionsAll.addAll(selectionHelper.selectFaultyVersionsFaultsCloseTogether());
 		return pitFaultyVersionsAll;
 	}

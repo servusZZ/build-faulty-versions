@@ -134,6 +134,11 @@ public class FaultyVersionSelector {
 	 * Selects all allowed faults by random.<br>
 	 * Returns null, iff no faulty version could be built because the (by random) selected faults led to failures
 	 * that excluded all remaining faults.
+	 * First, Faults are selected so that each failure has only 1 underlying fault. Then, additional faults are picked
+	 * in a manner that these Faults lead to Failures that have 2 underlying faults.
+	 * 	For faultsCount [1,5]		1 Fault leads to Failures with 2 underlying faults.
+	 * 	For faultsCount [6,12]		2 Faults lead to Failures with 2 underlying faults.
+	 * 	For faultsCount [13,20]		3 Faults lead to Failures with 2 underlying faults.
 	 */
 	private Set<PitMutation> selectFaultyVersionTwoFaultsPerFailure(List<PitMutation> pitFaults, int faultsCount){
 		// select faults that only lead to one underlying fault first
@@ -146,7 +151,7 @@ public class FaultyVersionSelector {
 			Set<PitMutation> tmpForbiddenFaults = FaultsUtils.getLinkedFaultsThroughFailures(nextFault);
 			twoUnderlyingFaults.addAll(tmpForbiddenFaults);
 			remainingFaults.removeAll(tmpForbiddenFaults);
-			if (faultyVersion.size() == faultsCount-1) {
+			if (stopPickingFaultsOneUnderlyingFault(faultsCount, faultyVersion.size())){
 				break;
 			}
 		}
@@ -162,6 +167,22 @@ public class FaultyVersionSelector {
 			twoUnderlyingFaults.removeAll(FaultsUtils.getLinkedFaultsThroughFailures(nextFault));
 		}
 		return faultyVersion;
+	}
+	private boolean stopPickingFaultsOneUnderlyingFault(int faultsCount, int tmpFaultsCount) {
+		if (faultsCount <= 5) {
+			if (tmpFaultsCount == faultsCount-1) {
+				return true;
+			}
+		} else if (faultsCount <= 12) {
+			if (tmpFaultsCount == faultsCount-2) {
+				return true;
+			}
+		} else {
+			if (tmpFaultsCount == faultsCount-3) {
+				return true;
+			}
+		}
+		return false;
 	}
 	public List<Set<PitMutation>> selectFaultyVersionsFaultsCloseTogether(){
 		System.out.println("Faults Close Together Selection Strategy not yet implemented.");

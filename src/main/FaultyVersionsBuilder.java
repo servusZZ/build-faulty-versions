@@ -26,11 +26,15 @@ import prioritization.evaluation.TestSuiteEvaluationEntry;
 public class FaultyVersionsBuilder {
 	private PitAnalysisPreparation prep;
 	private final int MIN_TEST_SIZE = 20;
+	private final int MIN_FAULTS_COUNT = 5;
+	private final int MAX_FAULTS_COUNT = 12;
+	private final int VERSIONS_PER_FAULT_COUNT = 2;
 	
 	private List<Set<PitMutation>> importPitFaultyVersions(String dir) throws IOException {
 		// import pit merged methods
 		prep = new PitAnalysisPreparation(dir, MIN_TEST_SIZE);
-		PitFaultSelectionStrategyBase faultSelectionStrategy = new FaultSelectionStrategy1(5, 12, 2);
+		PitFaultSelectionStrategyBase faultSelectionStrategy = new FaultSelectionStrategy1(
+				MIN_FAULTS_COUNT, MAX_FAULTS_COUNT, VERSIONS_PER_FAULT_COUNT);
 		return faultSelectionStrategy.selectFaultyVersions(prep.getPitFaults(), prep.getPitTests());
 	}
 
