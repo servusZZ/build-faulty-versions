@@ -83,7 +83,6 @@ public class FaultyVersionSelector {
 	public List<Set<PitMutation>> selectFaultyVersionsTwoFaultsPerFailure(int minFaultCount, int maxFaultCount, int versionsPerFaultCount, List<PitMutation> pitFaults){
 		List<Set<PitMutation>> twoFaultsPerFailureAll = new ArrayList<Set<PitMutation>>();
 		List<Set<PitMutation>> twoFaultsPerFailure;
-		//TODO: Anpassen, dass gestaffelt 1, 2 und 3 Faults so gelegt werden, dass diese Faults zu Failures mit 2 underlying Faults führen
 		for (int faultsCount = minFaultCount; faultsCount <= maxFaultCount; faultsCount++) {
 			twoFaultsPerFailure = selectFaultyVersionsTwoFaultsPerFailure(faultsCount, versionsPerFaultCount, pitFaults);
 			if (twoFaultsPerFailure == null) {
