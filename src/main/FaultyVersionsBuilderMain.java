@@ -7,21 +7,31 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import data_import.pit.merged.PitAnalysisPreparation;
 import data_import.pit.merged.StatisticsPrinter;
+import fault_selection.FaultSelectionStrategy1;
+import fault_selection.PitFaultSelectionStrategyBase;
 
 public class FaultyVersionsBuilderMain {
-	public static final String PIT_MUTATIONS_BASE_DIR = "C:\\study\\SWDiag\\sharedFolder_UbuntuVM\\MA\\pit_data\\";
+	public static final String PIT_MUTATIONS_BASE_DIR = "C:\\study\\SWDiag\\sharedFolder_UbuntuVM\\MA\\pit_data\\notyetanalyzed\\";
 	public static final String PIT_DATA_FOLDER_NAME = "\\pit-data\\";
+	
+	private static final int MIN_FAULTS_COUNT = 1;
+	private static final int MAX_FAULTS_COUNT = 20;
+	private static final int VERSIONS_PER_FAULT_COUNT = 10;
+	
 	public static void main(String[] args) throws IOException, ParserConfigurationException {
 		System.out.println("Program started...");
-		FaultyVersionsBuilder builder = new FaultyVersionsBuilder();
 		File[] projectDirectories = new File(PIT_MUTATIONS_BASE_DIR).listFiles(File::isDirectory);
 		for (File projectDir : projectDirectories) {
 			String projectName = projectDir.getPath().substring(projectDir.getPath().lastIndexOf('\\') + 1, projectDir.getPath().length());
 			System.out.println("Building Faulty versions for project " + projectName);
-			builder.processMergedPitProject(projectDir.getPath() + PIT_DATA_FOLDER_NAME , projectName);
+			FaultyVersionsBuilder builder = new FaultyVersionsBuilder(projectDir.getPath() + PIT_DATA_FOLDER_NAME, projectName);
+			PitFaultSelectionStrategyBase selector = new FaultSelectionStrategy1(MIN_FAULTS_COUNT, MAX_FAULTS_COUNT, VERSIONS_PER_FAULT_COUNT, builder);
+			selector.selectAndProcessFaultyVersions(builder.prep.getPitFaults(), builder.prep.getPitTests());
 		}
 		System.out.println("Building Faulty Versions program finished!");
 	}
+	
+	
 	
 	@SuppressWarnings("unused")
 	private static void printStatistics() throws ParserConfigurationException, IOException {

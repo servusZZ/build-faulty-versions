@@ -1,36 +1,43 @@
 package fault_selection;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import main.FaultyVersionsBuilder;
 import pit.data_objects.PitMutation;
 
 public class FaultyVersionSelector {
 	private FaultyVersionComparator comparator;
-	public FaultyVersionSelector() {
+	private FaultyVersionsBuilder builder;
+	
+	public FaultyVersionSelector(FaultyVersionsBuilder builder) {
 		this.comparator = new FaultyVersionComparator();
+		this.builder = builder;
 	}
-	public List<Set<PitMutation>> selectFaultyVersionsOneFaultPerFailure(int minFaultCount, int maxFaultCount, int versionsPerFaultCount, List<PitMutation> pitFaults){
-		List<Set<PitMutation>> oneFaultPerFailureAll = new ArrayList<Set<PitMutation>>();
-		List<Set<PitMutation>> oneFaultPerFailure;
+	/**
+	 * Returns the projectId of the next project to be created.
+	 */
+	public int processFaultyVersionsOneFaultPerFailure(int minFaultCount, int maxFaultCount, int versionsPerFaultCount, List<PitMutation> pitFaults) throws IOException{
+		int nextFaultyProjectId = 1;
 		for (int faultsCount = minFaultCount; faultsCount <= maxFaultCount; faultsCount++) {
-			oneFaultPerFailure = selectFaultyVersionsOneFaultPerFailure(faultsCount, versionsPerFaultCount, pitFaults);
+			List<Set<PitMutation>> oneFaultPerFailure = selectFaultyVersionsOneFaultPerFailure(faultsCount, versionsPerFaultCount, pitFaults);
 			if (oneFaultPerFailure == null) {
 				System.out.println("DEBUG: No version containing " + faultsCount + " faults could be built anymore. Config: Only One Fault per Failure.");
 				break;
 			}
-			oneFaultPerFailureAll.addAll(oneFaultPerFailure);
+			nextFaultyProjectId = builder.createAndWriteFaultyVersions(oneFaultPerFailure, nextFaultyProjectId);
 		}
-		return oneFaultPerFailureAll;
+		return nextFaultyProjectId;
 	}
 	/**
 	 * Builds faulty versions for the passed number of faults.
 	 * Per Failure only one Fault is allowed.<br>
 	 * Returns null, iff no faulty version could be built (by the number of defined maximum tries).
 	 */
-	private List<Set<PitMutation>> selectFaultyVersionsOneFaultPerFailure(int faultsCount, int versionsPerFaultCount, List<PitMutation> pitFaults){
+	public List<Set<PitMutation>> selectFaultyVersionsOneFaultPerFailure(int faultsCount, int versionsPerFaultCount, List<PitMutation> pitFaults){
 		List<Set<PitMutation>> faultyVersionsPerFaultCount = new ArrayList<Set<PitMutation>>();
 		/** If no version or just an identical version could be built
 		 * for maxTries times in a row, the iteration stops.	*/
@@ -80,18 +87,16 @@ public class FaultyVersionSelector {
 		return null;
 	}
 	
-	public List<Set<PitMutation>> selectFaultyVersionsTwoFaultsPerFailure(int minFaultCount, int maxFaultCount, int versionsPerFaultCount, List<PitMutation> pitFaults){
-		List<Set<PitMutation>> twoFaultsPerFailureAll = new ArrayList<Set<PitMutation>>();
-		List<Set<PitMutation>> twoFaultsPerFailure;
+	public void processFaultyVersionsTwoFaultsPerFailure(int minFaultCount, int maxFaultCount, int versionsPerFaultCount, List<PitMutation> pitFaults, int nextFaultyVersionId) throws IOException{
+		int nextFaultyProjectId = nextFaultyVersionId;
 		for (int faultsCount = minFaultCount; faultsCount <= maxFaultCount; faultsCount++) {
-			twoFaultsPerFailure = selectFaultyVersionsTwoFaultsPerFailure(faultsCount, versionsPerFaultCount, pitFaults);
+			List<Set<PitMutation>> twoFaultsPerFailure = selectFaultyVersionsTwoFaultsPerFailure(faultsCount, versionsPerFaultCount, pitFaults);
 			if (twoFaultsPerFailure == null) {
 				System.out.println("DEBUG: No version containing " + faultsCount + " faults could be built anymore. Config: Two Faults per Failure allowed.");
 				break;
 			}
-			twoFaultsPerFailureAll.addAll(twoFaultsPerFailure);
+			nextFaultyProjectId = builder.createAndWriteFaultyVersions(twoFaultsPerFailure, nextFaultyProjectId);
 		}
-		return twoFaultsPerFailureAll;
 	}
 	/**
 	 * Builds faulty versions for the passed number of faults.

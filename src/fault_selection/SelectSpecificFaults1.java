@@ -1,5 +1,5 @@
 package fault_selection;
-
+/*
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -7,12 +7,13 @@ import java.util.Set;
 
 import pit.data_objects.PitMutation;
 import pit.data_objects.PitTestCase;
-
+*/
 /**
  * Class used for debugging Refinement step.
  * UnsupportedOperationException appeared, restore same fauly version.
  *
  */
+/*
 public class SelectSpecificFaults1 extends PitFaultSelectionStrategyBase{
 	public SelectSpecificFaults1() {
 		super(3, 3, 1);
@@ -41,3 +42,4 @@ public class SelectSpecificFaults1 extends PitFaultSelectionStrategyBase{
 		return null;
 	}
 }
+*/

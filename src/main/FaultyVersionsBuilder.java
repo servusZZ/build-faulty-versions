@@ -23,27 +23,51 @@ import prioritization.evaluation.ProjectEvaluationEntry;
 import prioritization.evaluation.TestSuiteEvaluationEntry;
 
 public class FaultyVersionsBuilder {
-	private PitAnalysisPreparation prep;
+	public PitAnalysisPreparation prep;
 	private final int MIN_TEST_SIZE = 20;
-	private final int MIN_FAULTS_COUNT = 1;
-	private final int MAX_FAULTS_COUNT = 20;
-	private final int VERSIONS_PER_FAULT_COUNT = 10;
 	
-	private List<Set<PitMutation>> importPitFaultyVersions(String dir) throws IOException {
-		// import pit merged methods
+	private int filesCounter = 1;
+	private String dir;
+	private String projectName;
+	
+	public FaultyVersionsBuilder(String dir, String projectName) throws IOException {
+		this.dir = dir;
+		this.projectName = projectName;
 		prep = new PitAnalysisPreparation(dir, MIN_TEST_SIZE);
-		PitFaultSelectionStrategyBase faultSelectionStrategy = new FaultSelectionStrategy1(
-				MIN_FAULTS_COUNT, MAX_FAULTS_COUNT, VERSIONS_PER_FAULT_COUNT);
-		return faultSelectionStrategy.selectFaultyVersions(prep.getPitFaults(), prep.getPitTests());
 	}
-
 	
-	public void processMergedPitProject(String dir, String projectName) throws IOException {
-		List<Set<PitMutation>> pitFaultyVersions = importPitFaultyVersions(dir);
-		
-		// create FaultyVersion object for each pitFaultyVersion
+//	private List<Set<PitMutation>> importPitFaultyVersions(String dir) throws IOException {
+//		PitFaultSelectionStrategyBase faultSelectionStrategy = new FaultSelectionStrategy1(
+//				MIN_FAULTS_COUNT, MAX_FAULTS_COUNT, VERSIONS_PER_FAULT_COUNT);
+//		return faultSelectionStrategy.selectFaultyVersions(prep.getPitFaults(), prep.getPitTests());
+//	}
+	
+//	public void processMergedPitProject(String dir, String projectName) throws IOException {
+//		List<Set<PitMutation>> pitFaultyVersions = importPitFaultyVersions(dir);
+//		//TODO: create faultyVersions in slices, e.g. only versions of one faultCount,
+//		//		write them in a file and continue with next FaultCount
+//		
+//		// create FaultyVersion object for each pitFaultyVersion
+//		List<FaultyVersion> faultyVersions = new ArrayList<FaultyVersion>();
+//		int faultyProjectId = 1;
+//		for (Set<PitMutation> pitFaultyVersion: pitFaultyVersions) {
+//			PitDataObjectsConverter converter = prep.initTestsAndFaults(pitFaultyVersion);
+//			System.out.println("Building next faulty Version " + projectName + "-" + faultyProjectId + " with " + converter.getFaults().size() + " faults, " + converter.getFailures().length + " failures, " + converter.getPassedTCs().length + " passing Test Cases and " + FaultyProjectGlobals.methodsCount + " relevant methods.");
+//			ProjectEvaluationEntry projectMetrics = createProjectEvaluationEntry(faultyProjectId, projectName, converter);
+//			faultyProjectId++;
+//			faultyVersions.add(new FaultyVersion(converter.getFailures(), converter.getPassedTCs(),
+//					converter.getFaults(), projectMetrics));
+//		}
+//		writeFaultyVersionsFile(dir, faultyVersions);
+//	}
+	
+	/**
+	 * Creates faulty versions for the passed pit faulty versions and writes them.
+	 * Returns the last faultyProjectId + 1 (it was not yet written).
+	 */
+	public int createAndWriteFaultyVersions(List<Set<PitMutation>> pitFaultyVersions, int nextFaultyProjectId) throws IOException {
 		List<FaultyVersion> faultyVersions = new ArrayList<FaultyVersion>();
-		int faultyProjectId = 1;
+		int faultyProjectId = nextFaultyProjectId;
 		for (Set<PitMutation> pitFaultyVersion: pitFaultyVersions) {
 			PitDataObjectsConverter converter = prep.initTestsAndFaults(pitFaultyVersion);
 			System.out.println("Building next faulty Version " + projectName + "-" + faultyProjectId + " with " + converter.getFaults().size() + " faults, " + converter.getFailures().length + " failures, " + converter.getPassedTCs().length + " passing Test Cases and " + FaultyProjectGlobals.methodsCount + " relevant methods.");
@@ -52,7 +76,8 @@ public class FaultyVersionsBuilder {
 			faultyVersions.add(new FaultyVersion(converter.getFailures(), converter.getPassedTCs(),
 					converter.getFaults(), projectMetrics));
 		}
-		writeFaultyVersionsFiles(dir, faultyVersions);
+		writeFaultyVersionsFile(dir, faultyVersions);
+		return faultyProjectId;
 	}
 	
 	private ProjectEvaluationEntry createProjectEvaluationEntry(int faultyProjectId, String projectName, PitDataObjectsConverter converter) {
@@ -74,19 +99,20 @@ public class FaultyVersionsBuilder {
 		return projectMetrics;
 	}
 	
-	private void writeFaultyVersionsFiles(String outputDir, List<FaultyVersion> faultyVersions) throws IOException {
-		int filesCounter = 0;
-		for (int i = 0; i < faultyVersions.size(); i = i + 50) {
-			filesCounter++;
-			int toIndex = i + 50;
-			if (toIndex > faultyVersions.size()) {
-				toIndex = faultyVersions.size();
-			}
-			writeFaultyVersionsFile(outputDir, new ArrayList<FaultyVersion>(faultyVersions.subList(i, toIndex)), filesCounter);
-		}
-	}
-	private void writeFaultyVersionsFile(String outputDir, List<FaultyVersion> faultyVersions, int filesCounter) throws IOException {
+//	private void writeFaultyVersionsFiles(String outputDir, List<FaultyVersion> faultyVersions) throws IOException {
+//		int filesCounter = 0;
+//		for (int i = 0; i < faultyVersions.size(); i = i + 10) {
+//			filesCounter++;
+//			int toIndex = i + 10;
+//			if (toIndex > faultyVersions.size()) {
+//				toIndex = faultyVersions.size();
+//			}
+//			writeFaultyVersionsFile(outputDir, new ArrayList<FaultyVersion>(faultyVersions.subList(i, toIndex)));
+//		}
+//	}
+	private void writeFaultyVersionsFile(String outputDir, List<FaultyVersion> faultyVersions) throws IOException {
 		String outputFile = outputDir + "faulty-versions-" + filesCounter + ".xml";
+		filesCounter++;
 		Path outputFilePath = Paths.get(outputFile);
 		Files.deleteIfExists(outputFilePath);
 		
