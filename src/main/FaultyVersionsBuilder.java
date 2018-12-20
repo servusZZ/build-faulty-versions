@@ -44,8 +44,6 @@ public class FaultyVersionsBuilder {
 	
 //	public void processMergedPitProject(String dir, String projectName) throws IOException {
 //		List<Set<PitMutation>> pitFaultyVersions = importPitFaultyVersions(dir);
-//		//TODO: create faultyVersions in slices, e.g. only versions of one faultCount,
-//		//		write them in a file and continue with next FaultCount
 //		
 //		// create FaultyVersion object for each pitFaultyVersion
 //		List<FaultyVersion> faultyVersions = new ArrayList<FaultyVersion>();

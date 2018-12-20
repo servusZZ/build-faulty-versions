@@ -11,14 +11,15 @@ import fault_selection.FaultSelectionStrategy1;
 import fault_selection.PitFaultSelectionStrategyBase;
 
 public class FaultyVersionsBuilderMain {
-	public static final String PIT_MUTATIONS_BASE_DIR = "C:\\study\\SWDiag\\sharedFolder_UbuntuVM\\MA\\pit_data\\notyetanalyzed\\";
+	public static final String PIT_MUTATIONS_BASE_DIR = "C:\\study\\SWDiag\\sharedFolder_UbuntuVM\\MA\\pit_data\\";
 	public static final String PIT_DATA_FOLDER_NAME = "\\pit-data\\";
 	
 	private static final int MIN_FAULTS_COUNT = 1;
 	private static final int MAX_FAULTS_COUNT = 20;
 	private static final int VERSIONS_PER_FAULT_COUNT = 10;
 	
-	public static void main(String[] args) throws IOException, ParserConfigurationException {
+	public static void main(String[] args) throws ParserConfigurationException {
+		try {
 		System.out.println("Program started...");
 		File[] projectDirectories = new File(PIT_MUTATIONS_BASE_DIR).listFiles(File::isDirectory);
 		for (File projectDir : projectDirectories) {
@@ -29,6 +30,11 @@ public class FaultyVersionsBuilderMain {
 			selector.selectAndProcessFaultyVersions(builder.prep.getPitFaults(), builder.prep.getPitTests());
 		}
 		System.out.println("Building Faulty Versions program finished!");
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+			return;
+		}
 	}
 	
 	
